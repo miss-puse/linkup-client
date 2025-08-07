@@ -3,6 +3,9 @@
     "name": "adatingapp-client",
     "slug": "adatingapp-client",
     "version": "1.0.0",
+    "extra": {
+      "API_URL": "http://localhost:8080/"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "adatingappclient",

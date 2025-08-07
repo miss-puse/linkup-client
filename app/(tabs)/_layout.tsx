@@ -29,8 +29,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Feed',
+          tabBarIcon: ({ color }) => <TabBarIcon name="feed" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -47,13 +47,30 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="two"
+
+        <Tabs.Screen
+            name="matches"
+            options={{
+                title: 'Matches',
+                tabBarIcon: ({ color }) => <TabBarIcon name="thumbs-up" color={color} />,
+            }}
+        />
+
+        <Tabs.Screen
+            name="chats"
+            options={{
+                title: 'Chats',
+                tabBarIcon: ({ color }) => <TabBarIcon name="wechat" color={color} />,
+            }}
+        />
+
+        <Tabs.Screen
+        name="profile"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
         }}
-      />
+    />
     </Tabs>
   );
 }
