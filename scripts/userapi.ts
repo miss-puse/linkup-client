@@ -1,10 +1,11 @@
 import Constants from 'expo-constants';
+import {Alert} from "react-native";
 
 const apiUrl = Constants.expoConfig?.extra?.API_URL;
 
 export async function login(data: { [key: string]: any }) {
     try {
-        const response = await fetch(`${apiUrl}/users/login`, {
+        const response = await fetch(`${apiUrl}/user/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -21,6 +22,7 @@ export async function login(data: { [key: string]: any }) {
         return result;
 
     } catch (error: any) {
+        Alert.alert(error.message);
         throw new Error(error.message);
     }
 }

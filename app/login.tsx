@@ -1,12 +1,9 @@
-import {Alert, Button, Pressable, StyleSheet, TextInput} from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
+import { Alert, Button, Pressable, StyleSheet, TextInput } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import {Input} from "postcss";
-import {useState} from "react";
-import {useRouter} from "expo-router";
-import {login} from "@/scripts/userapi";
-import {saveToStorage} from "@/scripts/db";
+import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { login } from '@/scripts/userapi';
+import { saveToStorage } from '@/scripts/db';
 
 export default function LoginScreen() {
     const [password, setPassword] = useState('');
@@ -14,53 +11,58 @@ export default function LoginScreen() {
     const router = useRouter();
 
     const handleLogin = async () => {
-        try{
-            const data = login({
+        try {
+            const data = await login({
                 username: userName,
-                password: password
-            })
-            if(data){
-                await saveToStorage("user", {
+                password: password,
+            });
+
+            if (data && data.user) {
+                await saveToStorage('user', {
                     token: data.token,
                     user: {
-                        userId: data.userId,
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                        email: data.email,
-                        username: data.username,
-                        password: data.password,
-                        age: data.age,
-                        bio: data.bio,
-                        institution: data.institution,
-                        gender: data.gender,
-                        interests: data.interests,
-                        relationshipType: data.relationshipType,
-                        // image: {
-                        //     imageId: data.image.imageId
-                        // }
-                    }
+                        userId: data.user.userId,
+                        firstName: data.user.firstName,
+                        lastName: data.user.lastName,
+                        email: data.user.email,
+                        username: data.user.username,
+                        age: data.user.age,
+                        bio: data.user.bio,
+                        institution: data.user.institution,
+                        gender: data.user.gender,
+                        interests: data.user.interests,
+                        relationshipType: data.user.relationshipType,
+                        image: {
+                            base64String: data.user.imageBase64
+                        }
+                        , // ✅ save the base64 string
+                    },
                 });
-                Alert.alert(`Welcome back${data.firstName} ${data.lastName} !`);
-                router.push("/(tabs)/profile");
+
+                Alert.alert(`Welcome back ${data.user.firstName} ${data.user.lastName}!`);
+                router.push('/(tabs)/profile');
+            } else {
+                Alert.alert('Login failed', 'Invalid credentials or missing user data');
             }
+        } catch (e: any) {
+            console.error('Login error:', e.message);
+            Alert.alert('Login failed', 'Please check your credentials and try again.');
         }
-        catch (e: any) {
-            console.error(e.message);
-        }
-    }
+    };
 
     const handleGoToSignup = () => {
-        router.push("/signup");
-    }
+        router.push('/signup');
+    };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Login</Text>
+
             <TextInput
                 style={styles.input}
                 onChangeText={text => setUserName(text)}
                 value={userName}
-                placeholder="Enter email"
+                placeholder="Enter username"
             />
 
             <TextInput
@@ -68,19 +70,14 @@ export default function LoginScreen() {
                 onChangeText={text => setPassword(text)}
                 value={password}
                 placeholder="Enter password"
+                secureTextEntry
             />
 
-            <Button
-                title="Login"
-                onPress={handleLogin}
-            />
+            <Button title="Login" onPress={handleLogin} />
 
-            <Pressable
-                onPress={handleGoToSignup}
-            >
-            <Text>Dont have an account? SignUp</Text>
+            <Pressable onPress={handleGoToSignup}>
+                <Text>Don’t have an account? Sign Up</Text>
             </Pressable>
-
         </View>
     );
 }
@@ -105,5 +102,6 @@ const styles = StyleSheet.create({
         margin: 12,
         borderWidth: 1,
         padding: 10,
+        width: '80%',
     },
 });
