@@ -1,0 +1,5 @@
+[
+  { "key": "MALE", "label": "Male" },
+  { "key": "FEMALE", "label": "Female" },
+  { "key": "OTHER", "label": "Other" }
+]
