@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet,Image } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { MultiSelect } from "react-native-element-dropdown";
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 
 // Import enums from JSON
 import institutions from "@/data/institutions.json";
 import genders from "@/data/genders.json";
 import interests from "@/data/interests.json";
 import courses from "@/data/courses.json";
+
+//  Import your API functions here
+import { deleteAccount } from "@/services/api";
 
 export default function CompleteProfile() {
     const [bio, setBio] = useState("");
@@ -19,7 +20,6 @@ export default function CompleteProfile() {
     const [course, setCourse] = useState("");
 
     const handleSubmit = async () => {
-
         const payload = {
             userId: 1, // must always be included
             username: "XA",
@@ -42,12 +42,33 @@ export default function CompleteProfile() {
                 body: JSON.stringify(payload),
             });
             if (!res.ok) throw new Error("Failed to update profile");
-            console.log("Profile updated!");
-        } catch (err) {
-            console.error(err);
+            Alert.alert("✅ Success", "Profile updated!");
+        } catch (err: any) {
+            Alert.alert("❌ Error", err.message);
         }
     };
 
+    const handleDeleteAccount = async () => {
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete your account? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteAccount(1); // delete user with ID 1
+                            Alert.alert("✅ Account deleted successfully");
+                        } catch (err: any) {
+                            Alert.alert("❌ Error", err.message);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -93,6 +114,11 @@ export default function CompleteProfile() {
             </Picker>
 
             <Button title="Submit" onPress={handleSubmit} />
+
+            {/* ✅ New delete button */}
+            <View style={{ marginTop: 20 }}>
+                <Button title="Delete Account" color="red" onPress={handleDeleteAccount} />
+            </View>
         </View>
     );
 }
