@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import {Alert} from "react-native";
+import { Alert } from "react-native";
 
 const apiUrl = Constants.expoConfig?.extra?.API_URL;
 
@@ -48,5 +48,24 @@ export async function signup(data: { [key: string]: any }) {
     } catch (error: any) {
         Alert.alert(error.message);
         throw new Error(error.message);
+    }
+}
+
+//  New delete account function
+export async function deleteAccount(userId: number) {
+    try {
+        const response = await fetch(`${apiUrl}/user/${userId}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(errorData || 'Failed to delete account');
+        }
+
+        return await response.text();
+    } catch (error: any) {
+        Alert.alert(error.message);
+        throw error;
     }
 }
