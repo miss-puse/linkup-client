@@ -1,6 +1,5 @@
 import {
   Alert,
-  Button,
   Pressable,
   StyleSheet,
   TextInput,
@@ -10,21 +9,25 @@ import { Text, View } from "@/components/Themed";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { login } from "@/scripts/userapi";
-import { getFromStorage, saveToStorage } from "@/scripts/db";
+import { saveToStorage } from "@/scripts/db";
 
 export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
-    try {
-      const data = await login({
-        email: email,
-        password: password,
-      });
+    if (!email || !password) {
+      Alert.alert("Please enter both email and password");
+      return;
+    }
 
-      if (data && data.user) {
+    setLoading(true);
+    try {
+      const data = await login({ email, password });
+
+      if (data?.user) {
         await saveToStorage("user", {
           token: data.token,
           user: {
@@ -45,24 +48,26 @@ export default function LoginScreen() {
           },
         });
 
-        Alert.alert(
-          `Welcome back ${data.user.firstName} ${data.user.lastName}!`
-        );
+        Alert.alert(`Welcome back ${data.user.firstName} ${data.user.lastName}!`);
         router.push("/profile");
       } else {
         Alert.alert("Login failed", "Invalid credentials or missing user data");
       }
     } catch (e: any) {
       console.error("Login error:", e.message);
-      Alert.alert(
-        "Login failed",
-        "Please check your credentials and try again."
-      );
+      Alert.alert("Login failed", "Please check your credentials and try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoToSignup = () => {
     router.push("/signup");
+  };
+
+  // New handler to navigate directly to complete profile without login
+  const handleGoToCompleteProfile = () => {
+    router.push("/completeprofile");
   };
 
   return (
@@ -77,35 +82,51 @@ export default function LoginScreen() {
 
         <TextInput
           style={styles.email}
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={setEmail}
           value={email}
           placeholder="Enter email"
           keyboardType="email-address"
           autoCapitalize="none"
+          accessible
+          accessibilityLabel="Email input"
         />
 
         <TextInput
           style={styles.password}
-          onChangeText={(text) => setPassword(text)}
+          onChangeText={setPassword}
           value={password}
           placeholder="Enter password"
           secureTextEntry
+          accessible
+          accessibilityLabel="Password input"
         />
 
-        <Pressable 
-        onPress={handleLogin}
-        style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
+        <Pressable
+          onPress={handleLogin}
+          style={styles.button}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Login button"
+        >
+          <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login"}</Text>
         </Pressable>
 
-        <Pressable onPress={handleGoToSignup}>
+        <Pressable onPress={handleGoToSignup} style={{ marginTop: 10 }}>
           <Text style={styles.text}>Don’t have an account? Sign Up</Text>
+        </Pressable>
+
+        {/* New button to allow users to go to CompleteProfile without login */}
+        <Pressable onPress={handleGoToCompleteProfile} style={{ marginTop: 20 }}>
+          <Text style={[styles.text, { textDecorationLine: "underline" }]}>
+            Complete Profile Without Login
+          </Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
+// Your existing styles here (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -120,11 +141,6 @@ const styles = StyleSheet.create({
     color: "#ffffffff",
     top: 50,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
   email: {
     height: 50,
     margin: 10,
@@ -138,7 +154,6 @@ const styles = StyleSheet.create({
     elevation: 20,
     marginTop: 95,
   },
-
   password: {
     height: 50,
     margin: 10,
@@ -152,7 +167,6 @@ const styles = StyleSheet.create({
     elevation: 20,
     marginTop: 10,
   },
-
   content: {
     display: "flex",
     flexDirection: "column",
@@ -166,7 +180,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#9d7373ff",
     borderRadius: 45,
   },
-
   image: {
     position: "absolute",
     display: "flex",
@@ -175,26 +188,22 @@ const styles = StyleSheet.create({
     height: 125,
     top: "10%",
   },
-
   text: {
     color: "#ffffffff",
-    fontWeight: 'medium',
-    marginTop: 10
+    fontWeight: "medium",
+    marginTop: 10,
+    textAlign: "center",
   },
-
   button: {
     backgroundColor: "#b908a4cf",
     marginTop: 20,
     borderRadius: 30,
-    width:100,
+    width: 100,
     height: 40,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
-
   buttonText: {
-    color:'#ffffffff',
-    textAlign: 'center',
-
-
-  }
+    color: "#ffffffff",
+    textAlign: "center",
+  },
 });
