@@ -1,145 +1,287 @@
-import {StyleSheet, Image, ScrollView, Button, Pressable} from 'react-native';
-import { Text, View } from '@/components/Themed';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
-import { clearAllStorage } from '@/scripts/db';
+"import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 
-export default function ProfileScreen() {
-  const [userData, setUserData] = useState<any>(null);
-  const router = useRouter();
+const institutions = [
+  { label: "University of Cape Town", value: "UNIVERSITY_OF_CAPE_TOWN" },
+  { label: "University of Fort Hare", value: "UNIVERSITY_OF_FORT_HARE" },
+  // ... your full list
+];
 
+const genders = [
+  { label: "Male", value: "MALE" },
+  { label: "Female", value: "FEMALE" },
+  { label: "Other", value: "OTHER" },
+  { label: "Prefer not to say", value: "PREFER_NOT_TO_SAY" },
+];
+
+const courses = [
+  { label: "BSc Computer Science", value: "BSC_CS" },
+  { label: "BA Psychology", value: "BA_PSY" },
+  // ... your full list
+];
+
+const interestsList = ["MUSIC", "SPORTS", "READING", "TRAVELING", "ART"];
+
+export default function CompleteProfile() {
+  const [username, setUsername] = useState("XA");
+  const [firstName, setFirstName] = useState("David");
+  const [lastName, setLastName] = useState("Python");
+  const [email, setEmail] = useState("boe@email.com");
+  const [password, setPassword] = useState("securepass123");
+  const [age, setAge] = useState("22");
+  const [bio, setBio] = useState("This is my bio");
+  const [institution, setInstitution] = useState("UNIVERSITY_OF_FORT_HARE");
+  const [gender, setGender] = useState("MALE");
+  const [course, setCourse] = useState("BSC_CS");
+  const [interests, setInterests] = useState(["MUSIC"]);
+  const [imageUri, setImageUri] = useState(null); // Will store the local URI of selected image
+
+  // Request permissions for image library on mount
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const user = await import('@/scripts/db').then(module =>
-            module.getFromStorage('user')
-        );
-        if (!user) {
-          router.replace('/login'); // redirect immediately if no user
-          return;
+    (async () => {
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          alert("Sorry, we need camera roll permissions to make this work!");
         }
-        setUserData(user);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        router.replace('/login'); // fallback
       }
-    };
-
-    fetchUserData();
+    })();
   }, []);
 
-  if (!userData) {
-    return (
-        <View style={styles.container}>
-          <Text>Loading profile...</Text>
-        </View>
-    );
-  }
-
-  const user = userData.user;
-  const base64Image = user.image?.base64String
-      ? `data:image/jpeg;base64,${user.image.base64String}`
-      : null;
-
-  const handleLogout = async () => {
-    try {
-      await clearAllStorage();
-      router.replace('/login'); // redirect after logout
-    } catch (error) {
-      console.error('Error logging out:', error);
+  const toggleInterest = (interest) => {
+    if (interests.includes(interest)) {
+      setInterests(interests.filter((i) => i !== interest));
+    } else {
+      setInterests([...interests, interest]);
     }
   };
 
-  const handleCompleteProfile = () => {
-    router.push('/completeprofile');
+  // Launch image picker to select image
+  const pickImage = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1], // Square crop for circle display
+        quality: 1,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.log("Error picking image:", error);
+    }
+  };
+
+  const handleSubmit = () => {
+    const payload = {
+      username,
+      firstName,
+      lastName,
+      email,
+      password,
+      age: Number(age),
+      bio,
+      institution,
+      gender,
+      interests,
+      course,
+      imageUri,
+    };
+    console.log("Submitting profile:", payload);
+    // submit logic here
   };
 
   return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>
-          {user.firstName} {user.lastName}
-        </Text>
-
-        {base64Image && (
-            <Pressable onPress={() => router.push('/editimage')}>
-              <Image
-                  source={{ uri: base64Image }}
-                  style={styles.profileImage}
-                  resizeMode="cover"
-              />
-            </Pressable>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      {/* Profile Image + Upload button at the TOP */}
+      <View style={styles.topImageContainer}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.placeholder]}>
+            <Text style={{ color: "#888" }}>No Image</Text>
+          </View>
         )}
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>
-            Username: <Text style={styles.value}>{user.username}</Text>
-          </Text>
-          <Text style={styles.label}>
-            Email: <Text style={styles.value}>{user.email}</Text>
-          </Text>
-          <Text style={styles.label}>
-            Age: <Text style={styles.value}>{user.age}</Text>
-          </Text>
-          <Text style={styles.label}>
-            Gender: <Text style={styles.value}>{user.gender}</Text>
-          </Text>
-          <Text style={styles.label}>
-            Institution: <Text style={styles.value}>{user.institution}</Text>
-          </Text>
-          <Text style={styles.label}>Bio:</Text>
-          <Text style={styles.value}>{user.bio}</Text>
+        <View style={{ marginTop: 8, width: 140 }}>
+          <Button title={imageUri ? "Change Image" : "Upload Image"} onPress={pickImage} />
         </View>
+      </View>
 
-        <View style={styles.buttonContainer}>
-          <Button title="Edit Profile" onPress={handleCompleteProfile} />
-        </View>
+      {/* Rest of the form */}
+      <Text>Username</Text>
+      <TextInput style={styles.input} value={username} onChangeText={setUsername} />
 
-        <View style={styles.logoutButton}>
-          <Button title="Logout" onPress={handleLogout} color="red" />
-        </View>
-      </ScrollView>
+      <Text>First Name</Text>
+      <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
+
+      <Text>Last Name</Text>
+      <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
+
+      <Text>Email</Text>
+      <TextInput
+        style={styles.input}
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+
+      <Text>Password</Text>
+      <TextInput
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <Text>Age</Text>
+      <TextInput
+        style={styles.input}
+        value={age}
+        onChangeText={setAge}
+        keyboardType="numeric"
+      />
+
+      <Text>Bio</Text>
+      <TextInput
+        style={[styles.input, { height: 80 }]}
+        value={bio}
+        onChangeText={setBio}
+        multiline
+      />
+
+      <Text>Institution</Text>
+      <Picker
+        selectedValue={institution}
+        onValueChange={(val) => setInstitution(val)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select institution..." value="" />
+        {institutions.map((inst) => (
+          <Picker.Item key={inst.value} label={inst.label} value={inst.value} />
+        ))}
+      </Picker>
+
+      <Text>Gender</Text>
+      <Picker
+        selectedValue={gender}
+        onValueChange={(val) => setGender(val)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select gender..." value="" />
+        {genders.map((g) => (
+          <Picker.Item key={g.value} label={g.label} value={g.value} />
+        ))}
+      </Picker>
+
+      <Text>Course</Text>
+      <Picker
+        selectedValue={course}
+        onValueChange={(val) => setCourse(val)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Select course..." value="" />
+        {courses.map((c) => (
+          <Picker.Item key={c.value} label={c.label} value={c.value} />
+        ))}
+      </Picker>
+
+      <Text>Interests</Text>
+      <View style={styles.interestsContainer}>
+        {interestsList.map((interest) => (
+          <TouchableOpacity
+            key={interest}
+            style={[
+              styles.interestButton,
+              interests.includes(interest) && styles.interestSelected,
+            ]}
+            onPress={() => toggleInterest(interest)}
+          >
+            <Text
+              style={
+                interests.includes(interest)
+                  ? styles.interestTextSelected
+                  : styles.interestText
+              }
+            >
+              {interest}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={{ marginTop: 20 }}>
+        <Button title="Submit" onPress={handleSubmit} />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: 20,
+  container: { backgroundColor: "#fff" },
+  topImageContainer: {
+    alignItems: "center",
+    marginVertical: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 15,
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 60, // circular
+    backgroundColor: "#eee",
   },
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginVertical: 15,
+  placeholder: {
+    justifyContent: "center",
+    alignItems: "center",
   },
-  infoContainer: {
-    width: '100%',
-    marginTop: 20,
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 8,
+    marginHorizontal: 16,
+    marginVertical: 6,
+    borderRadius: 4,
   },
-  label: {
-    fontWeight: 'bold',
-    marginTop: 10,
-    fontSize: 16,
+  picker: {
+    marginHorizontal: 16,
+    marginVertical: 6,
   },
-  value: {
-    fontWeight: 'normal',
-    fontSize: 16,
+  interestsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: 16,
+    marginVertical: 6,
   },
-  buttonContainer: {
-    marginTop: 20,
-    width: '100%',
+  interestButton: {
+    padding: 8,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: "#888",
+    borderRadius: 20,
   },
-  logoutButton: {
-    marginTop: 20,
-    width: '100%',
+  interestSelected: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  interestText: {
+    color: "#444",
+  },
+  interestTextSelected: {
+    color: "#fff",
   },
 });
+" 
