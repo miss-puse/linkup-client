@@ -1,146 +1,83 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { MultiSelect } from "react-native-element-dropdown";
 
-// Import enums from JSON
+// Data
 import institutions from "@/data/institutions.json";
 import genders from "@/data/genders.json";
 import interests from "@/data/interests.json";
 import courses from "@/data/courses.json";
 
-//  Import your API functions here
-import { deleteAccount } from "@/services/api";
+// Placeholder profile image
+const profileImage = "https://via.placeholder.com/100";
 
 export default function CompleteProfile() {
-    const [bio, setBio] = useState("");
-    const [institution, setInstitution] = useState("");
-    const [gender, setGender] = useState("");
-    const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-    const [course, setCourse] = useState("");
+  const [bio, setBio] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [gender, setGender] = useState("");
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [course, setCourse] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
-    const handleSubmit = async () => {
-        const payload = {
-            userId: 1, // must always be included
-            username: "XA",
-            firstName: "David",
-            lastName: "Python",
-            email: "boogie@gmail.com",
-            age: 22,
-            password: "12345",
-            bio,
-            institution,
-            gender,
-            interests: selectedInterests,
-            course,
-        };
+  const [showDeleteInput, setShowDeleteInput] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState("");
 
-        try {
-            const res = await fetch("http://localhost:8080/api/users/update", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-            if (!res.ok) throw new Error("Failed to update profile");
-            Alert.alert(" Success", "Profile updated!");
-        } catch (err: any) {
-            Alert.alert(" Error", err.message);
-        }
-    };
+  const user = {
+    id: 1,
+    fullName: "David Python",
+    email: "boogie@gmail.com",
+    username: "@XA",
+  };
 
-    const handleDeleteAccount = async () => {
-        Alert.alert(
-            "Confirm Delete",
-            "Are you sure you want to delete your account? This action cannot be undone.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await deleteAccount(1); // delete user with ID 1
-                            Alert.alert(" Account deleted successfully");
-                        } catch (err: any) {
-                            Alert.alert(" Error", err.message);
-                        }
-                    },
-                },
-            ]
-        );
-    };
+  const handleSubmit = async () => {
+    // ... your existing submit logic ...
+  };
 
-    return (
-        <View style={styles.container}>
-            <Text>Bio</Text>
-            <TextInput
-                style={styles.input}
-                value={bio}
-                onChangeText={setBio}
-                placeholder="Tell us about yourself"
-            />
+  const confirmDeleteAccount = async () => {
+  if (!deleteUserId || isNaN(Number(deleteUserId))) {
+    Alert.alert("❌ Error", "Please enter a valid user ID.");
+    return;
+  }
 
-            <Text>Institution</Text>
-            <Picker selectedValue={institution} onValueChange={setInstitution}>
-                {institutions.map((item) => (
-                    <Picker.Item key={item.key} label={item.label} value={item.key} />
-                ))}
-            </Picker>
+  try {
+    console.log("Sending DELETE request for user ID:", deleteUserId);
 
-            <Text>Gender</Text>
-            <Picker selectedValue={gender} onValueChange={setGender}>
-                {genders.map((item) => (
-                    <Picker.Item key={item.key} label={item.label} value={item.key} />
-                ))}
-            </Picker>
-
-            <Text>Interests</Text>
-            <MultiSelect
-                style={styles.dropdown}
-                data={interests}
-                labelField="label"
-                valueField="key"
-                placeholder="Select Interests"
-                value={selectedInterests}
-                onChange={setSelectedInterests}
-                selectedStyle={styles.selectedItem}
-            />
-
-            <Text>Course</Text>
-            <Picker selectedValue={course} onValueChange={setCourse}>
-                {courses.map((item) => (
-                    <Picker.Item key={item.key} label={item.label} value={item.key} />
-                ))}
-            </Picker>
-
-            <Button title="Submit" onPress={handleSubmit} />
-
-            {/*  New delete button */}
-            <View style={{ marginTop: 20 }}>
-                <Button title="Delete Account" color="red" onPress={handleDeleteAccount} />
-            </View>
-        </View>
+    const response = await fetch(
+      `http://192.168.x.x:9999/user/${deleteUserId}/schedule-deletion`, // Use your LAN IP, not localhost
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          // Add auth token if needed: Authorization: `Bearer ${token}`
+        },
+      }
     );
-}
 
-const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-    },
-    input: {
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 10,
-        marginBottom: 15,
-    },
-    dropdown: {
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 10,
-        marginBottom: 15,
-    },
-    selectedItem: {
-        backgroundColor: "green",
-        borderRadius: 8,
-    },
-});
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      console.error("Server error:", errorMessage);
+      throw new Error(errorMessage || "Failed to schedule account deletion");
+    }
+
+    const message = await response.text();
+    Alert.alert(" Success", message);
+    setShowDeleteInput(false);
+    setDeleteUserId("");
+  } catch (err: any) {
+    console.error("Request failed:", err);
+    Alert.alert(" Error", err.message);
+  }
+};
+
+  const handleLogout = () => {
+    Alert.alert("Logged out");
