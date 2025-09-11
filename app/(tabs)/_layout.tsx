@@ -69,6 +69,20 @@ export default function TabLayout() {
         options={{
             title: 'Profile',
             tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+            headerRight: () => (
+              <Link href="/completeprofile" asChild>
+                <Pressable>
+                  {({ pressed }) => (
+                    <FontAwesome
+                      name="edit"
+                      size={22}
+                      color={Colors[colorScheme ?? 'light'].text}
+                      style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    />
+                  )}
+                </Pressable>
+              </Link>
+            ),
         }}
     />
     </Tabs>

@@ -56,6 +56,10 @@ export default function ProfileScreen() {
     router.push('/completeprofile');
   };
 
+  const handleEmergency = () => {
+    router.push('/emergency');
+  };
+
   return (
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>
@@ -94,6 +98,10 @@ export default function ProfileScreen() {
 
         <View style={styles.buttonContainer}>
           <Button title="Edit Profile" onPress={handleCompleteProfile} />
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <Button title="Emergency" onPress={handleEmergency} color="#d9534f" />
         </View>
 
         <View style={styles.logoutButton}>
