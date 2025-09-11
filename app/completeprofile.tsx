@@ -9,9 +9,6 @@ import genders from "@/data/genders.json";
 import interests from "@/data/interests.json";
 import courses from "@/data/courses.json";
 
-//  Import your API functions here
-import { deleteAccount } from "@/services/api";
-
 export default function CompleteProfile() {
     const [bio, setBio] = useState("");
     const [institution, setInstitution] = useState("");
@@ -46,28 +43,6 @@ export default function CompleteProfile() {
         } catch (err: any) {
             Alert.alert("❌ Error", err.message);
         }
-    };
-
-    const handleDeleteAccount = async () => {
-        Alert.alert(
-            "Confirm Delete",
-            "Are you sure you want to delete your account? This action cannot be undone.",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await deleteAccount(1); // delete user with ID 1
-                            Alert.alert("✅ Account deleted successfully");
-                        } catch (err: any) {
-                            Alert.alert("❌ Error", err.message);
-                        }
-                    },
-                },
-            ]
-        );
     };
 
     return (
@@ -114,11 +89,6 @@ export default function CompleteProfile() {
             </Picker>
 
             <Button title="Submit" onPress={handleSubmit} />
-
-            {/* ✅ New delete button */}
-            <View style={{ marginTop: 20 }}>
-                <Button title="Delete Account" color="red" onPress={handleDeleteAccount} />
-            </View>
         </View>
     );
 }
