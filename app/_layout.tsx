@@ -55,8 +55,6 @@ function RootLayoutNav() {
         <Stack.Screen name="login" options={{ presentation: 'modal' }} />
         <Stack.Screen name="Signup"/>
         <Stack.Screen name="Login"/>
-        <Stack.Screen name="completeprofile" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="editimage" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

@@ -1,16 +1,9 @@
-import {
-  Alert,
-  Button,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  Image,
-} from "react-native";
-import { Text, View } from "@/components/Themed";
-import { useState } from "react";
-import { useRouter } from "expo-router";
-import { login } from "@/scripts/userapi";
-import { getFromStorage, saveToStorage } from "@/scripts/db";
+import { Alert, Button, Pressable, StyleSheet, TextInput } from 'react-native';
+import { Text, View } from '@/components/Themed';
+import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { login } from '@/scripts/userapi';
+import { saveToStorage } from '@/scripts/db';
 
 export default function LoginScreen() {
   const [password, setPassword] = useState("");
@@ -45,21 +38,16 @@ export default function LoginScreen() {
           },
         });
 
-        Alert.alert(
-          `Welcome back ${data.user.firstName} ${data.user.lastName}!`
-        );
-        router.push("/profile");
-      } else {
-        Alert.alert("Login failed", "Invalid credentials or missing user data");
-      }
-    } catch (e: any) {
-      console.error("Login error:", e.message);
-      Alert.alert(
-        "Login failed",
-        "Please check your credentials and try again."
-      );
-    }
-  };
+                Alert.alert(`Welcome back ${data.user.firstName} ${data.user.lastName}!`);
+                router.push('/(tabs)/profile');
+            } else {
+                Alert.alert('Login failed', 'Invalid credentials or missing user data');
+            }
+        } catch (e: any) {
+            console.error('Login error:', e.message);
+            Alert.alert('Login failed', 'Please check your credentials and try again.');
+        }
+    };
 
   const handleGoToSignup = () => {
     router.push("/signup");

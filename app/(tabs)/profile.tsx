@@ -1,10 +1,8 @@
-import {StyleSheet, Image, ScrollView, Button, Pressable} from 'react-native';
+import { StyleSheet, Image, ScrollView, Button } from 'react-native';
 import { Text, View } from '@/components/Themed';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { clearAllStorage } from '@/scripts/db';
-import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 
 export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
@@ -52,10 +50,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleCompleteProfile = () => {
-    router.push('/completeprofile');
-  };
-
   return (
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>
@@ -63,13 +57,11 @@ export default function ProfileScreen() {
         </Text>
 
         {base64Image && (
-            <Pressable onPress={() => router.push('/editimage')}>
-              <Image
-                  source={{ uri: base64Image }}
-                  style={styles.profileImage}
-                  resizeMode="cover"
-              />
-            </Pressable>
+            <Image
+                source={{ uri: base64Image }}
+                style={styles.profileImage}
+                resizeMode="cover"
+            />
         )}
 
         <View style={styles.infoContainer}>
@@ -90,10 +82,6 @@ export default function ProfileScreen() {
           </Text>
           <Text style={styles.label}>Bio:</Text>
           <Text style={styles.value}>{user.bio}</Text>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <Button title="Edit Profile" onPress={handleCompleteProfile} />
         </View>
 
         <View style={styles.logoutButton}>
@@ -134,12 +122,8 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     fontSize: 16,
   },
-  buttonContainer: {
-    marginTop: 20,
-    width: '100%',
-  },
   logoutButton: {
-    marginTop: 20,
+    marginTop: 30,
     width: '100%',
   },
 });
