@@ -4,7 +4,7 @@
     "slug": "adatingapp-client",
     "version": "1.0.0",
     "extra": {
-      "API_URL": "http://10.127.12.80:9999"
+      "API_URL": "http://192.168.18.75:9999"
     },
 
     "orientation": "portrait",

@@ -50,11 +50,21 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack
+      screenOptions={{
+          headerStyle: {
+            backgroundColor: '#a020f0',
+          }}}
+          >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ presentation: 'modal' }} />
         <Stack.Screen name="Signup"/>
         <Stack.Screen name="Login"/>
+        <Stack.Screen name="completeprofile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="editprofile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="editimage" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="chatscreen" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="userprofile" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

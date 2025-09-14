@@ -1,0 +1,12 @@
+[
+  { "key": "STRAIGHT", "label": "Straight" },
+  { "key": "GAY", "label": "Gay" },
+  { "key": "LESBIAN", "label": "Lesbian" },
+  { "key": "BISEXUAL", "label": "Bisexual" },
+  { "key": "ASEXUAL", "label": "Asexual" },
+  { "key": "PANSEXUAL", "label": "Pansexual" },
+  { "key": "QUEER", "label": "Queer" },
+  { "key": "QUESTIONING", "label": "Questioning" },
+  { "key": "OTHER", "label": "Other" },
+  { "key": "PREFER_NOT_TO_SAY", "label": "Prefer not to say" }
+]

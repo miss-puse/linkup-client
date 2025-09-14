@@ -1,31 +1,183 @@
-import { StyleSheet } from 'react-native';
-
-import EditScreenInfo from '@/components/EditScreenInfo';
+import { StyleSheet, ScrollView, Pressable,Image  } from 'react-native';
 import { Text, View } from '@/components/Themed';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { getChatsForUser, getMatchById,getUser } from '@/scripts/userapi';
+import { ChatDTO, Message } from '@/scripts/userapi';
+
+interface MatchInfo {
+  matchId: number;
+  firstName: string;
+  lastName: string;
+    image: string | null;
+}
 
 export default function ChatsScreen() {
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Chats</Text>
-            <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-            <EditScreenInfo path="app/(tabs)/profile.tsx" />
-        </View>
-    );
+  const [userData, setUserData] = useState<any>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [chats, setChats] = useState<ChatDTO[]>([]);
+  const [matches, setMatches] = useState<Record<number, MatchInfo>>({});
+  const router = useRouter();
+
+
+const fetchMatchInfo = async (matchId: number) => {
+  try {
+    const match = await getMatchById(matchId);
+    if (!match) return null;
+    const user = await getUser(match.user2Id);
+    
+    return { matchId, firstName: match.user2FirstName, lastName: match.user2LastName, image: user?.imageBase64 || null };
+  } catch (err) {
+    console.error('Error fetching match data:', err);
+    return null;
+  }
+};
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const user = await import('@/scripts/db').then(module =>
+          module.getFromStorage('user')
+        );
+
+        if (!user) {
+          router.replace('/login');
+          return;
+        }
+
+        setUserData(user);
+        const rawData: any = user;
+        const id = rawData.user.userId;
+        setUserId(id);
+
+        const chatsData = await getChatsForUser(id);
+        if (chatsData) setChats(chatsData);
+
+        // Fetch match info for each chat
+        if (chatsData) {
+          const matchPromises = chatsData.map(chat => fetchMatchInfo(chat.matchId));
+          const matchResults = await Promise.all(matchPromises);
+          const matchMap: Record<number, MatchInfo> = {};
+          matchResults.forEach(m => {
+            if (m) matchMap[m.matchId] = m;
+          });
+          setMatches(matchMap);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const renderLastMessage = (messages: Message[]) => {
+    if (!messages || messages.length === 0) return 'No messages yet';
+    return messages[messages.length - 1].content;
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Chats</Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {chats.map(chat => {
+          const matchInfo = matches[chat.matchId];
+          const displayName = matchInfo
+            ? `${matchInfo.firstName} ${matchInfo.lastName}`
+            : 'Loading...';
+
+          return (
+            <Pressable
+  key={chat.chatId}
+  style={styles.cardContent}
+  onPress={() =>
+    router.push({
+      pathname: '/chatscreen',
+      params: {
+        chatId: chat.chatId.toString(),
+        matchId: chat.matchId.toString(),
+        firstName: matchInfo?.firstName || '',
+        lastName: matchInfo?.lastName || '',
+        image: matchInfo?.image || '',
+    }})
+  }
+>
+  <View style={styles.cardContent}>
+    {matchInfo?.image ? (
+      <Image
+        source={{ uri: `data:image/jpeg;base64,${matchInfo.image}` }}
+        style={styles.avatar}
+      />
+    ) : (
+      <View style={[styles.avatar, styles.placeholder]} />
+    )}
+
+    <View style={styles.textContainer}>
+      <Text style={styles.matchText}>
+        {matchInfo ? `${matchInfo.firstName} ${matchInfo.lastName}` : 'Loading...'}
+      </Text>
+      <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
+    </View>
+  </View>
+</Pressable>
+
+          );
+        })}
+        {chats.length === 0 && (
+          <Text style={styles.emptyMessage}>No chats available</Text>
+        )}
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    separator: {
-        marginVertical: 30,
-        height: 1,
-        width: '80%',
-    },
+  container: {
+    flex: 1,
+    paddingTop: 10,
+    alignItems: 'center',
+  },
+  scrollContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  cardContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+    padding: 10,
+},
+avatar: {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  marginRight: 10,
+},
+textContainer: {
+  flex: 1,
+},
+placeholder: {
+  backgroundColor: '#ddd',
+},
+
+  matchText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
+  },
+  emptyMessage: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 20,
+    textAlign: 'center',
+  },
 });

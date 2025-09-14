@@ -2,6 +2,7 @@ import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
 import { Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -19,58 +20,58 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Feed',
-          tabBarIcon: ({ color }) => <TabBarIcon name="feed" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="info-circle"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+<Tabs
+  screenOptions={{
+    tabBarActiveTintColor: "#fff",
+    tabBarInactiveTintColor: "#ddd",
+    tabBarStyle: {
+      backgroundColor: "#9c27b0",
+      borderTopWidth: 0,
+      height: 60, // smaller so it fits
+      paddingBottom: 5, // keeps labels inside
+      paddingTop: 5,
+    },
+    tabBarIconStyle: {
+      margin: 0, // reset margins
+    },
+    tabBarLabelStyle: {
+      fontSize: 11,
+      marginBottom: 2, // small space below text
+    },
+    headerShown: useClientOnlyValue(false, true),
+  }}
+>
+  <Tabs.Screen
+    name="index"
+    options={{
+      title: "Feed",
+      tabBarIcon: ({ color }) => <TabBarIcon name="heart-o" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="matches"
+    options={{
+      title: "Matches",
+      tabBarIcon: ({ color }) => <TabBarIcon name="heart" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="chats"
+    options={{
+      title: "Chats",
+      tabBarIcon: ({ color }) => <TabBarIcon name="comments" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="profile"
+    options={{
+      title: "Profile",
+      tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+    }}
+  />
+</Tabs>
+</SafeAreaView>
 
-        <Tabs.Screen
-            name="matches"
-            options={{
-                title: 'Matches',
-                tabBarIcon: ({ color }) => <TabBarIcon name="thumbs-up" color={color} />,
-            }}
-        />
-
-        <Tabs.Screen
-            name="chats"
-            options={{
-                title: 'Chats',
-                tabBarIcon: ({ color }) => <TabBarIcon name="wechat" color={color} />,
-            }}
-        />
-
-        <Tabs.Screen
-        name="profile"
-        options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-        }}
-    />
-    </Tabs>
   );
 }

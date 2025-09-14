@@ -1,171 +1,288 @@
-import { Alert, Button, Pressable, StyleSheet, TextInput } from "react-native";
-import { Text, View } from "@/components/Themed";
-import { useState } from "react";
-import { useRouter } from "expo-router";
-import { signup } from "@/scripts/userapi";
+import { Alert, Button, Pressable, StyleSheet, TextInput, Platform, Switch,Image} from 'react-native';
+import { Text, View } from '@/components/Themed';
+import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { signupUser } from '@/scripts/userapi';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Picker } from "@react-native-picker/picker";
+import { MultiSelect } from "react-native-element-dropdown";
+import * as FileSystem from 'expo-file-system';
+import institutions from "@/data/institutions.json";
+import orientations from "@/data/orientations.json";
+import genders from "@/data/genders.json";
+import interests from "@/data/interests.json";
+import courses from "@/data/courses.json";
 
 export default function SignupScreen() {
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
+  const [step, setStep] = useState(1); // Track step 1-3
+
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+
+  const [age, setAge] = useState('');
+  const [bio, setBio] = useState('');
+  const [institution, setInstitution] = useState('');
+  const [gender, setGender] = useState('');
+  const [course, setCourse] = useState('');
+const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [smoker, setSmoker] = useState(false);
+  const [drinker, setDrinker] = useState(false);
+  const [height, setHeight] = useState('');
+  const [orientation, setOrientation] = useState('');
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+const [imageUri, setImageUri] = useState<string | null>(null);
 
   const router = useRouter();
 
+const pickImage = async () => {
+  if (Platform.OS !== 'web') {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Permission to access gallery is required!');
+      return;
+    }
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 0.7,
+    base64: false,
+  });
+
+  if (!result.canceled && result.assets.length > 0) {
+    const localUri = result.assets[0].uri;
+    setImageUri(localUri); // use this for preview
+
+    if (Platform.OS === 'web') {
+      const filename = localUri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
+      const file = new File([await fetch(localUri).then(r => r.blob())], filename, { type });
+      setImageFile(file); // only needed for web upload
+    } else {
+      setImageFile(null); // on mobile, you can handle upload differently
+    }
+  }
+};
+
+
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
   const handleSignUp = async () => {
     try {
-      const data = {
+      const user = {
         username,
         firstName,
         lastName,
         email,
         password,
         age: parseInt(age, 10),
+        bio,
+        institution,
+        gender,
+        course,
+        interests: selectedInterests,
+        orientation: orientation,
+        smoker,
+        drinker,
+        height: parseFloat(height),
       };
 
-      const result = await signup(data);
+      const result = await signupUser(user, imageFile || undefined);
 
       if (result) {
-        Alert.alert("Account created successfully!");
-        router.replace("/login");
+        Alert.alert('Account created successfully!');
+        router.replace('/login');
       }
     } catch (error: any) {
-      console.error("Signup error:", error.message);
-      Alert.alert("Signup failed", error.message);
+      console.error('Signup error:', error);
+      Alert.alert('Signup failed', error.message || 'Unknown error');
     }
   };
 
-  const handleGoToLogin = () => {
-    router.push("/login");
-  };
-
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
     <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
 
-      <View style={styles.content}>
-        <TextInput
-          style={styles.input}
-          onChangeText={setUsername}
-          value={username}
-          placeholder="Username"
-        />
+      {/* STEP 1: Basic User Info */}
+      {step === 1 && (
+        <View style={styles.stepContainer}>
+          <TextInput style={styles.input} onChangeText={setUsername} value={username} placeholder="Username" />
+          <TextInput style={styles.input} onChangeText={setFirstName} value={firstName} placeholder="First Name" />
+          <TextInput style={styles.input} onChangeText={setLastName} value={lastName} placeholder="Last Name" />
+          <TextInput style={styles.input} onChangeText={setEmail} value={email} placeholder="Email" keyboardType="email-address" />
+          <TextInput style={styles.input} onChangeText={setPassword} value={password} placeholder="Password" secureTextEntry />
+          <TextInput style={styles.input} onChangeText={setAge} value={age} placeholder="Age" keyboardType="numeric" />  
+          <TextInput style={styles.input} onChangeText={setBio} value={bio} placeholder="Bio" multiline />
+          <TextInput style={styles.input} onChangeText={setHeight} value={height} placeholder="Height (cm)" keyboardType="numeric" />
+        </View>
+      )}
 
-        <TextInput
-          style={styles.input}
-          onChangeText={setFirstName}
-          value={firstName}
-          placeholder="First Name"
-        />
+      {/* STEP 2: Personal Details */}
+      {step === 2 && (
+        <View style={styles.stepContainer}>
+          <Text>Institution</Text>
+            <Picker selectedValue={institution} onValueChange={setInstitution}>
+                          {institutions.map((item) => (
+                              <Picker.Item key={item.key} label={item.label} value={item.key} />
+                          ))}
+            </Picker>
+          <Text>Gender</Text>
+            <Picker selectedValue={gender} onValueChange={setGender}>
+                {genders.map((item) => (
+                    <Picker.Item key={item.key} label={item.label} value={item.key} />
+                ))}
+            </Picker>
+          <Text>Course</Text>
+            <Picker selectedValue={course} onValueChange={setCourse}>
+                {courses.map((item) => (
+                    <Picker.Item key={item.key} label={item.label} value={item.key} />
+                ))}
+            </Picker>
+          <Text>Interests</Text>
+                      <MultiSelect
+                          style={styles.dropdown}
+                          data={interests}
+                          labelField="label"
+                          valueField="key"
+                          placeholder="Select Interests"
+                          value={selectedInterests}
+                          onChange={setSelectedInterests}
+                          selectedStyle={styles.selectedItem}
+                      />
+                      
+          <Text>Orientation</Text>
+            <Picker selectedValue={institution} onValueChange={setOrientation}>
+                {orientations.map((item) => (
+                    <Picker.Item key={item.key} label={item.label} value={item.key} />
+                ))}
+            </Picker>
 
-        <TextInput
-          style={styles.input}
-          onChangeText={setLastName}
-          value={lastName}
-          placeholder="Last Name"
-        />
+          <View style={styles.switchContainer}>
+            <Text>Smoker:</Text>
+            <Switch value={smoker} onValueChange={setSmoker} />
+            <Text>Drinker:</Text>
+            <Switch value={drinker} onValueChange={setDrinker} />
+          </View>
+        </View>
+      )}
 
-        <TextInput
-          style={styles.input}
-          onChangeText={setEmail}
-          value={email}
-          placeholder="Email"
-          keyboardType="email-address"
-        />
+      {/* STEP 3: Image */}
+      {step === 3 && (
+  <View style={styles.stepContainer}>
+    <Pressable  style={styles.button} onPress={pickImage}><Text style={styles.buttonText}>Pick Profile Image</Text></Pressable>
+    {imageUri && (
+      <Image
+        source={{ uri: imageUri }}
+        style={{ width: 150, height: 150, marginTop: 10,alignContent:'center',alignSelf:'center' }}
+      />
+    )}
+  </View>
+)}
 
-        <TextInput
-          style={styles.input}
-          onChangeText={setAge}
-          value={age}
-          placeholder="Age"
-          keyboardType="numeric"
-        />
 
-        <TextInput
-          style={styles.input}
-          onChangeText={setPassword}
-          value={password}
-          placeholder="Password"
-          secureTextEntry={true} // ✅ password hidden
-        />
-
-        <Pressable onPress={handleSignUp} style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
-        </Pressable>
-
-        <Pressable onPress={handleGoToLogin}>
-          <Text style={styles.text}>Already have an account? Sign In</Text>
-        </Pressable>
+      {/* Navigation Buttons */}
+      <View style={styles.navButtons}>
+        {step > 1 && <Pressable style={styles.button} onPress={handleBack}><Text style={styles.buttonText}>Back</Text></Pressable>}
+        {step < 3 && <Pressable style={styles.button} onPress={handleNext}><Text style={styles.buttonText}>Next</Text></Pressable>}
+        {step === 3 && <Pressable style={styles.button} onPress={handleSignUp}><Text style={styles.buttonText}>Sign Up</Text></Pressable>}
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     padding: 20,
-    backgroundColor: "#c2a6a6ff",
-    marginTop: 0,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
   },
-
   title: {
-    position: "absolute",
-    top: 20,
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: 22,
+    fontWeight: 'bold',
     marginBottom: 20,
-    color: "#ffff",
+    textAlign: 'center',
+    color: '#6a0dad',
+  },
+  stepContainer: {
+    marginBottom: 20,
   },
   input: {
     height: 50,
-    margin: 10,
-    borderWidth: 1,
-    borderColor: "transparent",
-    boxShadow: "#DDDDD",
-    padding: 15,
-    width: "80%",
-    borderRadius: 30,
-    backgroundColor: "#e9e9e9cc",
-    elevation: 20,
-    marginTop: 10,
+    marginVertical: 10,
+    borderWidth: 1.5,
+    borderColor: '#6a0dad',
+    paddingHorizontal: 12,
+    borderRadius: 25,
+    fontSize: 16,
+    color: '#333',
   },
-
-  content: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-    width: "95%",
-    height: "90%",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "absolute",
-    top: "10%",
-    backgroundColor: "#9d7373ff",
-    borderRadius: 45,
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#6a0dad',
+    borderRadius: 25,
+    paddingHorizontal: 12,
+    height: 50,
+    marginVertical: 10,
   },
-
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  togglePassword: {
+    padding: 5,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  navButtons: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginTop: 15,
+  },
   button: {
-    backgroundColor: "#b908a4cf",
-    marginTop: 20,
-    borderRadius: 30,
-    width: 100,
-    height: 40,
-    justifyContent: "center",
+    backgroundColor: '#6a0dad', // purple button
+    paddingVertical: 14,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginVertical: 5,
   },
-
   buttonText: {
-    color: "#ffffffff",
-    textAlign: "center",
+    color: '#fff', // white text
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-
-  text: {
-    color: "#ffffffff",
-    fontWeight: "medium",
-    marginTop: 10,
-  },
+  dropdown: {
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 10,
+        marginBottom: 15,
+    },
+    selectedItem: {
+        backgroundColor: "#6a0dad",
+        color: '#fff',
+        borderRadius: 8,
+    },
 });
+
