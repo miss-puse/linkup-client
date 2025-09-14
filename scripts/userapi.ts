@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import {Alert} from "react-native";
+import { Platform, Switch,Image} from 'react-native';
 
 const apiUrl = Constants.expoConfig?.extra?.API_URL;
 const LIKES_URL = apiUrl + '/likes';
@@ -181,31 +182,34 @@ export async function getUser(userId: number) {
     }
 }
 
-export async function signupUser(user: User, imageFile?: File): Promise<any> {
+export async function signupUser(user: User): Promise<any> {
   try {
-    const formData = new FormData();
-    formData.append("user", JSON.stringify(user));
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-
     const response = await fetch(`${apiUrl}/user/signup`, {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(user),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(JSON.stringify(errorData));
+      let errorText;
+      try {
+        errorText = await response.text();
+      } catch {
+        errorText = "Unknown error";
+      }
+      throw new Error(`Signup failed: ${response.status} ${errorText}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (err) {
     console.error("Signup error:", err);
     throw err;
   }
 }
+
+
 
 export async function updateUserFields(
   userId: number,

@@ -28,6 +28,8 @@ useEffect(() => {
       );
 
       if (!user) {
+        alert(user)
+        console.log(user)
         router.replace('/login');
         return;
       }
@@ -44,10 +46,13 @@ useEffect(() => {
         if (imageResponse?.imageUrl) {
           setImageUri(imageResponse.imageUrl);
         }
+        else{
+          setImageUri(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
-      router.replace('/login');
+     // router.replace('/login');
     }
   };
 
@@ -69,7 +74,6 @@ useEffect(() => {
 
   const user = userData.user;
 
-  // Helper to get initials
   const getInitials = (firstName: string, lastName: string) => {
     const firstInitial = firstName ? firstName.charAt(0).toUpperCase() : '';
     const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
@@ -79,7 +83,7 @@ useEffect(() => {
   const handleLogout = async () => {
     try {
       await clearAllStorage();
-      router.replace('/login'); // redirect after logout
+      router.replace('/login');
     } catch (error) {
       console.error('Error logging out:', error);
     }

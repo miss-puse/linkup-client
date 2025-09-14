@@ -54,7 +54,7 @@ useEffect(() => {
     try {
       const allUsers = await getAllUsers();
       if (allUsers) {
-        // Only keep users whose ID is not the logged-in user's ID
+
         setUsers(prevUsers => {
           if (userId !== null) {
             return allUsers.filter(u => u.userId !== userId);
