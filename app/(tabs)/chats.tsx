@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { getChatsForUser, getMatchById, getUser } from '@/scripts/userapi';
 import { ChatDTO, Message } from '@/scripts/userapi';
+import moment from 'moment';
 
 interface MatchInfo {
   matchId: number;
@@ -85,7 +86,6 @@ export default function ChatsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Chats</Text>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {chats.map(chat => {
           const matchInfo = matches[chat.matchId];
@@ -121,7 +121,14 @@ export default function ChatsScreen() {
                   <Text style={styles.matchText}>
                     {matchInfo ? `${matchInfo.firstName} ${matchInfo.lastName}` : 'Loading...'}
                   </Text>
-                  <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
+                   <View style={styles.messageRow}>
+    <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
+    <Text style={styles.timestamp}>
+      {chat.messages.length > 0
+        ? moment(chat.messages[chat.messages.length - 1].sentAt).format('HH:mm')
+        : ''}
+    </Text>
+  </View>
                 </View>
               </View>
             </Pressable>
@@ -142,7 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 3,
     paddingBottom: 20,
   },
   title: {
@@ -182,4 +189,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
   },
+  messageRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginTop: 5,
+},
+timestamp: {
+  fontSize: 12,
+  color: '#999',
+  marginLeft: 10,
+},
+
 });
