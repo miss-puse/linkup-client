@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, FlatList, Pressable, View,KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, TextInput, FlatList, Pressable, View, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Themed';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState<number | null>(null);
   const [chatPartner, setChatPartner] = useState<string>('Chat');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,7 +33,6 @@ export default function ChatScreen() {
       try {
         const match = await getMatchById(Number(chatId));
         if (!match) return;
-        // Determine the other user
         const otherUserId = userId === match.user1Id ? match.user2Id : match.user1Id;
         const otherUser = await getUser(otherUserId);
         if (otherUser) {
@@ -50,15 +50,18 @@ export default function ChatScreen() {
 
     const fetchMessages = async () => {
       try {
+        setLoading(true);
         const data = await getMessagesForChat(Number(chatId));
         setMessages(data);
       } catch (err) {
         console.error('Failed to fetch messages:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
   }, [chatId]);
 
@@ -93,35 +96,50 @@ export default function ChatScreen() {
     );
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#a020f0" />
+        <Text style={{ marginTop: 10 }}>Loading chat...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerText}>{chatPartner}</Text>
-        </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={100}
+      >
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerText}>{chatPartner}</Text>
+          </View>
 
-        {/* Messages */}
-        <FlatList
-          data={messages}
-          renderItem={renderMessage}
-          keyExtractor={item => item.messageId.toString()}
-          contentContainerStyle={styles.chatContainer}
-        />
-
-        {/* Input */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Enter your message..."
+          {/* Messages */}
+          <FlatList
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={item => item.messageId.toString()}
+            contentContainerStyle={styles.chatContainer}
           />
-          <Pressable onPress={handleSendMessage} style={styles.sendButton}>
-            <Ionicons name="send" size={20} color="#fff" />
-          </Pressable>
+
+          {/* Input */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Enter your message..."
+            />
+            <Pressable onPress={handleSendMessage} style={styles.sendButton}>
+              <Ionicons name="send" size={20} color="#fff" />
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -184,5 +202,11 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
     marginLeft: 8,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
