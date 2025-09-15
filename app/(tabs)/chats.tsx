@@ -1,15 +1,15 @@
-import { StyleSheet, ScrollView, Pressable,Image  } from 'react-native';
+import { StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { getChatsForUser, getMatchById,getUser } from '@/scripts/userapi';
+import { getChatsForUser, getMatchById, getUser } from '@/scripts/userapi';
 import { ChatDTO, Message } from '@/scripts/userapi';
 
 interface MatchInfo {
   matchId: number;
   firstName: string;
   lastName: string;
-    image: string | null;
+  image: string | null;
 }
 
 export default function ChatsScreen() {
@@ -19,20 +19,26 @@ export default function ChatsScreen() {
   const [matches, setMatches] = useState<Record<number, MatchInfo>>({});
   const router = useRouter();
 
+  const fetchMatchInfo = async (matchId: number, currentUserId: number) => {
+    try {
+      const match = await getMatchById(matchId);
+      if (!match) return null;
 
-const fetchMatchInfo = async (matchId: number) => {
-  try {
-    const match = await getMatchById(matchId);
-    if (!match) return null;
-    const user = await getUser(match.user2Id);
-    
-    return { matchId, firstName: match.user2FirstName, lastName: match.user2LastName, image: user?.imageBase64 || null };
-  } catch (err) {
-    console.error('Error fetching match data:', err);
-    return null;
-  }
-};
+      // Get the other user in the match
+      const otherUserId = match.user1Id === currentUserId ? match.user2Id : match.user1Id;
+      const user = await getUser(otherUserId);
 
+      return {
+        matchId,
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        image: user?.imageBase64 || null,
+      };
+    } catch (err) {
+      console.error('Error fetching match data:', err);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,7 +62,7 @@ const fetchMatchInfo = async (matchId: number) => {
 
         // Fetch match info for each chat
         if (chatsData) {
-          const matchPromises = chatsData.map(chat => fetchMatchInfo(chat.matchId));
+          const matchPromises = chatsData.map(chat => fetchMatchInfo(chat.matchId, id));
           const matchResults = await Promise.all(matchPromises);
           const matchMap: Record<number, MatchInfo> = {};
           matchResults.forEach(m => {
@@ -83,45 +89,42 @@ const fetchMatchInfo = async (matchId: number) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {chats.map(chat => {
           const matchInfo = matches[chat.matchId];
-          const displayName = matchInfo
-            ? `${matchInfo.firstName} ${matchInfo.lastName}`
-            : 'Loading...';
 
           return (
             <Pressable
-  key={chat.chatId}
-  style={styles.cardContent}
-  onPress={() =>
-    router.push({
-      pathname: '/chatscreen',
-      params: {
-        chatId: chat.chatId.toString(),
-        matchId: chat.matchId.toString(),
-        firstName: matchInfo?.firstName || '',
-        lastName: matchInfo?.lastName || '',
-        image: matchInfo?.image || '',
-    }})
-  }
->
-  <View style={styles.cardContent}>
-    {matchInfo?.image ? (
-      <Image
-        source={{ uri: `data:image/jpeg;base64,${matchInfo.image}` }}
-        style={styles.avatar}
-      />
-    ) : (
-      <View style={[styles.avatar, styles.placeholder]} />
-    )}
+              key={chat.chatId}
+              style={styles.cardContent}
+              onPress={() =>
+                router.push({
+                  pathname: '/chatscreen',
+                  params: {
+                    chatId: chat.chatId.toString(),
+                    matchId: chat.matchId.toString(),
+                    firstName: matchInfo?.firstName || '',
+                    lastName: matchInfo?.lastName || '',
+                    image: matchInfo?.image || '',
+                  },
+                })
+              }
+            >
+              <View style={styles.cardContent}>
+                {matchInfo?.image ? (
+                  <Image
+                    source={{ uri: `data:image/jpeg;base64,${matchInfo.image}` }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.placeholder]} />
+                )}
 
-    <View style={styles.textContainer}>
-      <Text style={styles.matchText}>
-        {matchInfo ? `${matchInfo.firstName} ${matchInfo.lastName}` : 'Loading...'}
-      </Text>
-      <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
-    </View>
-  </View>
-</Pressable>
-
+                <View style={styles.textContainer}>
+                  <Text style={styles.matchText}>
+                    {matchInfo ? `${matchInfo.firstName} ${matchInfo.lastName}` : 'Loading...'}
+                  </Text>
+                  <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
+                </View>
+              </View>
+            </Pressable>
           );
         })}
         {chats.length === 0 && (
@@ -148,23 +151,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   cardContent: {
-  flexDirection: 'row',
-  alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
-},
-avatar: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  marginRight: 10,
-},
-textContainer: {
-  flex: 1,
-},
-placeholder: {
-  backgroundColor: '#ddd',
-},
-
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  placeholder: {
+    backgroundColor: '#ddd',
+  },
   matchText: {
     fontSize: 16,
     fontWeight: 'bold',
