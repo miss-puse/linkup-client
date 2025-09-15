@@ -101,31 +101,30 @@ useEffect(() => {
 
  const handleLike = async () => {
   const currentUser = users[currentIndex];
-  console.log("Liking user:", currentUser);
-  
   if (!currentUser || !userId) return;
 
   try {
-    const alreadyLiked = await isLiked(userId, currentUser.userId);
-    if (alreadyLiked) {
-      alert("You've already liked this user.");
-      const match = await createMatch(userId, currentUser.userId);
-      if (match) {
-        alert(`It's a match with ${currentUser.firstName}!`);
-        router.push('/matches');
-      }
+    // First, add the like
+    const liked = await addLike(userId, currentUser.userId);
+
+    if (!liked) {
+      alert("Failed to like user. Try again.");
       return;
     }
 
-    
-    const success = await addLike(userId, currentUser.userId);
-    if (success) {
-      alert(`You liked ${currentUser.username}!`);
+    // Then check if a match is made
+    const match = await createMatch(userId, currentUser.userId);
+
+    if (match) {
+      // Only show match message
+      alert(`It's a match with ${currentUser.firstName}!`);
+      router.push('/matches');
     } else {
-      alert("Failed to like user. Try again.");
+      // Only show like message
+      alert(`You liked ${currentUser.username}!`);
     }
 
-    
+    // Swipe the card
     swiperRef.current?.swipeRight();
     if (currentIndex < users.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -138,6 +137,7 @@ useEffect(() => {
     alert("An error occurred while liking user.");
   }
 };
+
   const handleDislike = () => swiperRef.current?.swipeLeft();
 
   const currentUser = users[currentIndex];
