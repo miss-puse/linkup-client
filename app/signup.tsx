@@ -13,7 +13,7 @@ import interests from "@/data/interests.json";
 import courses from "@/data/courses.json";
 
 export default function SignupScreen() {
-  const [step, setStep] = useState(1); // Track step 1-2
+  const [step, setStep] = useState(1); 
 
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
@@ -24,7 +24,7 @@ export default function SignupScreen() {
   const [age, setAge] = useState('');
   const [bio, setBio] = useState('');
   const [institution, setInstitution] = useState('');
-  const [gender, setGender] = useState('');
+  const [gender, setGender] = useState('MALE');
   const [course, setCourse] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [smoker, setSmoker] = useState(false);
@@ -42,39 +42,74 @@ export default function SignupScreen() {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSignUp = async () => {
-    try {
-      const user = {
-        username,
-        firstName,
-        lastName,
-        email,
-        password,
-        age: parseInt(age, 10),
-        bio,
-        institution,
-        gender,
-        course,
-        interests: selectedInterests,
-        orientation,
-        smoker,
-        drinker,
-        height: parseFloat(height),
-      };
+const handleSignUp = async () => {
+  // Collect missing fields
+  const missingFields: string[] = [];
 
-      console.log('Signing up user:', user);
+  if (!username.trim()) missingFields.push("Username");
+  if (!firstName.trim()) missingFields.push("First Name");
+  if (!lastName.trim()) missingFields.push("Last Name");
+  if (!email.trim()) missingFields.push("Email");
+  if (!password.trim()) missingFields.push("Password");
+  if (!age.trim()) missingFields.push("Age");
+  if (!bio.trim()) missingFields.push("Bio");
+  if (!height.trim()) missingFields.push("Height");
+  if (!institution) missingFields.push("Institution");
+  if (!gender) missingFields.push("Gender");
+  if (!course) missingFields.push("Course");
+  if (!orientation) missingFields.push("Orientation");
+  if (selectedInterests.length === 0) missingFields.push("Interest(s)");
 
-      const result = await signupUser(user);
+  // Numeric validation
+  const ageNum = parseInt(age, 10);
+  const heightNum = parseFloat(height);
+  if (!isNaN(ageNum) && ageNum <= 0) missingFields.push("Valid Age");
+  if (!isNaN(heightNum) && heightNum <= 0) missingFields.push("Valid Height");
 
-      if (result) {
-        Alert.alert('Account created successfully!');
-        router.replace('/login');
-      }
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      Alert.alert('Signup failed', error.message || 'Unknown error');
+  // If anything is missing, alert the user
+  if (missingFields.length > 0) {
+    Alert.alert(
+      "Validation Error",
+      `Please fill in the following fields:\n- ${missingFields.join("\n- ")}`
+    );
+    return;
+  }
+
+  // All good, submit
+  try {
+    const user = {
+      username,
+      firstName,
+      lastName,
+      email,
+      password,
+      age: ageNum,
+      bio,
+      institution,
+      gender,
+      course,
+      interests: selectedInterests,
+      orientation,
+      smoker,
+      drinker,
+      height: heightNum,
+    };
+
+    console.log('Signing up user:', user);
+
+    const result = await signupUser(user);
+
+    if (result) {
+      Alert.alert('Account created successfully!');
+      router.replace('/login');
     }
-  };
+  } catch (error: any) {
+    console.error('Signup error:', error);
+    Alert.alert('Signup failed', error.message || 'Unknown error');
+  }
+};
+
+
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>

@@ -138,9 +138,9 @@ return (
         <Text style={styles.buttonText}>Update Profile</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => {}}>
+      {/* <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => {}}>
         <Text style={styles.buttonText}>Emergency Contacts</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>

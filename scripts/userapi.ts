@@ -83,7 +83,8 @@ export async function login(data: { [key: string]: any }) {
     return result;
 
   } catch (error: any) {
-    Alert.alert(error.message);
+    // Alert.alert(error.message);
+    Alert.alert("Login Error","Hmmm...Something went wrong during login.");
     throw new Error(error.message);
   }
 }
@@ -154,7 +155,7 @@ export async function getImageByUserId(userId: number) {
         return result;
 
     } catch (error: any) {
-        Alert.alert(error.message);
+        alert("You dont have a profile picture! Tap the profile image icon to add one.");
         throw new Error(error.message);
     }
 }
