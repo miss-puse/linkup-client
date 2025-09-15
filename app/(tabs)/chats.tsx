@@ -1,4 +1,4 @@
-import { StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import { StyleSheet, ScrollView, Pressable, Image, ActivityIndicator } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -14,10 +14,10 @@ interface MatchInfo {
 }
 
 export default function ChatsScreen() {
-  const [userData, setUserData] = useState<any>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [chats, setChats] = useState<ChatDTO[]>([]);
   const [matches, setMatches] = useState<Record<number, MatchInfo>>({});
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const fetchMatchInfo = async (matchId: number, currentUserId: number) => {
@@ -25,7 +25,7 @@ export default function ChatsScreen() {
       const match = await getMatchById(matchId);
       if (!match) return null;
 
-      // Get the other user in the match
+      // figure out the other user
       const otherUserId = match.user1Id === currentUserId ? match.user2Id : match.user1Id;
       const user = await getUser(otherUserId);
 
@@ -41,48 +41,59 @@ export default function ChatsScreen() {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const user = await import('@/scripts/db').then(module =>
-          module.getFromStorage('user')
-        );
+  const fetchData = async () => {
+    try {
+      const user = await import('@/scripts/db').then(module =>
+        module.getFromStorage('user')
+      );
 
-        if (!user) {
-          router.replace('/login');
-          return;
-        }
-
-        setUserData(user);
-        const rawData: any = user;
-        const id = rawData.user.userId;
-        setUserId(id);
-
-        const chatsData = await getChatsForUser(id);
-        if (chatsData) setChats(chatsData);
-
-        // Fetch match info for each chat
-        if (chatsData) {
-          const matchPromises = chatsData.map(chat => fetchMatchInfo(chat.matchId, id));
-          const matchResults = await Promise.all(matchPromises);
-          const matchMap: Record<number, MatchInfo> = {};
-          matchResults.forEach(m => {
-            if (m) matchMap[m.matchId] = m;
-          });
-          setMatches(matchMap);
-        }
-      } catch (err) {
-        console.error(err);
+      if (!user) {
+        router.replace('/login');
+        return;
       }
-    };
 
+      const rawData: any = user;
+      const id = rawData.user.userId;
+      setUserId(id);
+
+      const chatsData = await getChatsForUser(id);
+      if (chatsData) {
+        setChats(chatsData);
+
+        const matchPromises = chatsData.map(chat => fetchMatchInfo(chat.matchId, id));
+        const matchResults = await Promise.all(matchPromises);
+        const matchMap: Record<number, MatchInfo> = {};
+        matchResults.forEach(m => {
+          if (m) matchMap[m.matchId] = m;
+        });
+        setMatches(matchMap);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 5000); // refresh every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const renderLastMessage = (messages: Message[]) => {
     if (!messages || messages.length === 0) return 'No messages yet';
     return messages[messages.length - 1].content;
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ff4d6d" />
+        <Text style={styles.loadingText}>Loading chats...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -121,14 +132,14 @@ export default function ChatsScreen() {
                   <Text style={styles.matchText}>
                     {matchInfo ? `${matchInfo.firstName} ${matchInfo.lastName}` : 'Loading...'}
                   </Text>
-                   <View style={styles.messageRow}>
-    <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
-    <Text style={styles.timestamp}>
-      {chat.messages.length > 0
-        ? moment(chat.messages[chat.messages.length - 1].sentAt).format('HH:mm')
-        : ''}
-    </Text>
-  </View>
+                  <View style={styles.messageRow}>
+                    <Text style={styles.lastMessage}>{renderLastMessage(chat.messages)}</Text>
+                    <Text style={styles.timestamp}>
+                      {chat.messages.length > 0
+                        ? moment(chat.messages[chat.messages.length - 1].sentAt).format('HH:mm')
+                        : ''}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </Pressable>
@@ -151,11 +162,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 3,
     paddingBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
   },
   cardContent: {
     flexDirection: 'row',
@@ -190,15 +196,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   messageRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginTop: 5,
-},
-timestamp: {
-  fontSize: 12,
-  color: '#999',
-  marginLeft: 10,
-},
-
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  timestamp: {
+    fontSize: 12,
+    color: '#999',
+    marginLeft: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#555',
+  },
 });
