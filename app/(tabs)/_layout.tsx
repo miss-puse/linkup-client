@@ -46,7 +46,7 @@ export default function TabLayout() {
     name="index"
     options={{
       title: "Feed",
-      tabBarIcon: ({ color }) => <TabBarIcon name="heart-o" color={color} />,
+      tabBarIcon: ({ color }) => <TabBarIcon name="rss" color={color} />,
     }}
   />
   <Tabs.Screen
