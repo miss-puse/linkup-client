@@ -1,0 +1,7 @@
+[
+  { "key": "SHORT_TERM", "label": "Short Term" },
+  { "key": "LONG_TERM", "label": "Long Term" },
+  { "key": "FRIENDSHIP", "label": "Friendship" },
+  { "key": "OPEN_RELATIONSHIP", "label": "Open Relationship" },
+  { "key": "CASUAL", "label": "Casual" }
+]

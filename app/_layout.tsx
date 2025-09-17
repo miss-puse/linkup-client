@@ -65,6 +65,8 @@ function RootLayoutNav() {
         <Stack.Screen name="editimage" options={{ presentation: 'modal' }} />
         <Stack.Screen name="chatscreen" options={{ presentation: 'modal' }} />
         <Stack.Screen name="userprofile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="previewprofile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="editpreferences" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

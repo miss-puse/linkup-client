@@ -7,6 +7,7 @@ const LIKES_URL = apiUrl + '/likes';
 const MATCHES_URL = apiUrl + '/match';
 const CHATS_URL = apiUrl + "/chats";
 const MESSSAGE_URL = apiUrl + "/messages";
+const PREFERENCE_URL = apiUrl + "/pref";
 export interface LikeDTO {
   likeId: number;
   likerId: number;
@@ -432,4 +433,99 @@ export async function sendMessage(
   }
 
   return response.json();
+}
+
+export interface PreferenceDTO {
+  id?: number;
+  user:{  userId: number;
+    },
+  preferredInterests: string[];
+  relationshipType: string;
+  minAge: number;
+  maxAge: number;
+  preferredGender: string;
+  preferredCourses: string[];
+  maxDistance: number;
+  smokingPreference: boolean;
+  drinkingPreference: boolean;
+}
+
+// Create a new preference
+export async function createPreference(pref: PreferenceDTO): Promise<PreferenceDTO | null> {
+  try {
+    const response = await fetch(PREFERENCE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: { userId: pref.user.userId },
+        preferredInterests: pref.preferredInterests,
+        relationshipType: pref.relationshipType,
+        minAge: pref.minAge,
+        maxAge: pref.maxAge,
+        preferredGender: pref.preferredGender,
+        preferredCourses: pref.preferredCourses,
+        maxDistance: pref.maxDistance,
+        smokingPreference: pref.smokingPreference,
+        drinkingPreference: pref.drinkingPreference,
+      }),
+    });
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating preference:", error);
+    return null;
+  }
+}
+
+// Get a preference by ID
+export async function getPreferenceByUserId(id: number): Promise<PreferenceDTO | null> {
+  try {
+    const response = await fetch(`${PREFERENCE_URL}/user/${id}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching preference:", error);
+    return null;
+  }
+}
+
+// Update a preference
+export async function updatePreference(pref: PreferenceDTO): Promise<PreferenceDTO | null> {
+  try {
+    const response = await fetch(PREFERENCE_URL, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: pref.id,
+        user: { userId: pref.user.userId },
+        preferredInterests: pref.preferredInterests,
+        relationshipType: pref.relationshipType,
+        minAge: pref.minAge,
+        maxAge: pref.maxAge,
+        preferredGender: pref.preferredGender,
+        preferredCourses: pref.preferredCourses,
+        maxDistance: pref.maxDistance,
+        smokingPreference: pref.smokingPreference,
+        drinkingPreference: pref.drinkingPreference,
+      }),
+    });
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating preference:", error);
+    return null;
+  }
+}
+
+// Delete a preference
+export async function deletePreference(id: number): Promise<boolean> {
+  try {
+    const response = await fetch(`${PREFERENCE_URL}?id=${id}`, { method: "DELETE" });
+    return response.ok;
+  } catch (error) {
+    console.error("Error deleting preference:", error);
+    return false;
+  }
 }
