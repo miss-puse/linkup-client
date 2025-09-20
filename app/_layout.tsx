@@ -67,6 +67,9 @@ function RootLayoutNav() {
         <Stack.Screen name="userprofile" options={{ presentation: 'modal' }} />
         <Stack.Screen name="previewprofile" options={{ presentation: 'modal' }} />
         <Stack.Screen name="editpreferences" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="emergencycontacts" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="createemergencycontact" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="updateemergencycontact" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

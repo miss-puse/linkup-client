@@ -8,6 +8,8 @@ const MATCHES_URL = apiUrl + '/match';
 const CHATS_URL = apiUrl + "/chats";
 const MESSSAGE_URL = apiUrl + "/messages";
 const PREFERENCE_URL = apiUrl + "/pref";
+const EMERGENCY_URL = apiUrl + '/emergency-contacts';
+
 export interface LikeDTO {
   likeId: number;
   likerId: number;
@@ -528,4 +530,68 @@ export async function deletePreference(id: number): Promise<boolean> {
     console.error("Error deleting preference:", error);
     return false;
   }
+}
+export interface SmallUser {
+  userId: number;
+}
+export interface EmergencyContact {
+  contactId?: number;
+  user: SmallUser;
+  name: string;
+  phoneNumber: string;
+}
+
+export interface EmergencyContactDTO {
+  contactId: number;
+  userId: number;
+  name: string;
+  phoneNumber: string;
+}
+
+export async function createContact(contact: EmergencyContact): Promise<EmergencyContactDTO> {
+  const response = await fetch(EMERGENCY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(contact),
+  });
+
+  if (!response.ok) throw new Error("Failed to create contact");
+  return response.json();
+}
+
+export async function getContactById(id: number): Promise<EmergencyContactDTO> {
+  const response = await fetch(`${EMERGENCY_URL}/${id}`);
+  if (!response.ok) throw new Error("Contact not found");
+  return response.json();
+}
+
+export async function getAllContacts(): Promise<EmergencyContactDTO[]> {
+  const response = await fetch(EMERGENCY_URL);
+  if (!response.ok) throw new Error("Failed to fetch contacts");
+  return response.json();
+}
+
+export async function getContactsByUser(userId: number): Promise<EmergencyContactDTO[]> {
+  const response = await fetch(`${EMERGENCY_URL}/byuser/${userId}`);
+  if (!response.ok) throw new Error("Failed to fetch user contacts");
+  return response.json();
+}
+
+export async function updateContact(contact: EmergencyContact): Promise<EmergencyContactDTO> {
+  const response = await fetch(EMERGENCY_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(contact),
+  });
+
+  if (!response.ok) throw new Error("Failed to update contact");
+  return response.json();
+}
+
+export async function deleteContact(id: number): Promise<void> {
+  const response = await fetch(`${EMERGENCY_URL}/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) throw new Error("Failed to delete contact");
 }
