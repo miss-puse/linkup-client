@@ -1,9 +1,11 @@
-import { StyleSheet, TextInput, FlatList, Pressable, View, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, TextInput, FlatList, Pressable, View, KeyboardAvoidingView, Platform, ActivityIndicator, Modal } from 'react-native';
 import { Text } from '@/components/Themed';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { getMessagesForChat, sendMessage, MessageDTO, getMatchById, getUser } from '@/scripts/userapi';
+import { getFromStorage } from '@/scripts/db';
+import { createTicket, TicketRequest } from '@/scripts/ticket';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import moment from 'moment';
 
@@ -14,6 +16,9 @@ export default function ChatScreen() {
   const [userId, setUserId] = useState<number | null>(null);
   const [chatPartner, setChatPartner] = useState<string>('Chat');
   const [loading, setLoading] = useState(true);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [chatPartnerId, setChatPartnerId] = useState<number | null>(null);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -37,6 +42,7 @@ export default function ChatScreen() {
         const otherUser = await getUser(otherUserId);
         if (otherUser) {
           setChatPartner(`${otherUser.firstName} ${otherUser.lastName}`);
+          setChatPartnerId(otherUserId);
         }
       } catch (err) {
         console.error('Failed to fetch chat partner:', err);
@@ -45,6 +51,7 @@ export default function ChatScreen() {
     fetchPartner();
   }, [chatId, userId]);
 
+  // Fetch messages
   useEffect(() => {
     if (!chatId) return;
 
@@ -77,18 +84,32 @@ export default function ChatScreen() {
     }
   };
 
+  const handleReportUser = async () => {
+    if (!userId || !chatId) return;
+    try {
+      // Create REPORT_USER ticket
+      const ticket: TicketRequest = {
+        user: { userId },
+        issueType: 'REPORT_USER',
+        description: `Reported user: ${chatPartner} (Chat ID: ${chatId}) with User ID: ${chatPartnerId} for reason: ${reason || 'No reason provided'}`,
+      };
+      await createTicket(ticket);
+      alert('User reported successfully. A moderator will review the issue.' );
+    } catch (err) {
+      console.error('Failed to report user:', err);
+      alert('Failed to report user. Please try again.');
+    } finally {
+      setReportModalVisible(false);
+    }
+  };
+
   const renderMessage = ({ item }: { item: MessageDTO }) => {
     const isMe = item.senderId === userId;
     const timestamp = moment(item.sentAt).format('HH:mm');
 
     return (
       <View style={{ marginVertical: 5 }}>
-        <View
-          style={[
-            styles.messageBubble,
-            isMe ? styles.myMessage : styles.theirMessage,
-          ]}
-        >
+        <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage]}>
           <Text style={styles.messageText}>{item.content}</Text>
           <Text style={styles.messageTime}>{timestamp}</Text>
         </View>
@@ -107,15 +128,14 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={100}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={100}>
         <View style={styles.container}>
-          {/* Header */}
+          {/* Header with Report User button */}
           <View style={styles.header}>
             <Text style={styles.headerText}>{chatPartner}</Text>
+            <Pressable style={styles.reportButton} onPress={() => setReportModalVisible(true)}>
+              <Text style={styles.reportButtonText}>Report</Text>
+            </Pressable>
           </View>
 
           {/* Messages */}
@@ -138,6 +158,25 @@ export default function ChatScreen() {
               <Ionicons name="send" size={20} color="#fff" />
             </Pressable>
           </View>
+
+          {/* Report Confirmation Modal */}
+          <Modal visible={reportModalVisible} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Confirm Report</Text>
+                <Text style={styles.modalText}>Are you sure you want to report {chatPartner}?</Text>
+                <TextInput style={{height: 40, borderColor: 'gray', borderWidth: 1,borderRadius:5, marginBottom: 10, paddingHorizontal: 8}} placeholder="Reason for reporting" value={reason} onChangeText={setReason} />
+                <View style={styles.modalButtons}>
+                  <Pressable style={[styles.modalButton, styles.cancelButton]} onPress={() => setReportModalVisible(false)}>
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable style={[styles.modalButton, styles.submitButton]} onPress={handleReportUser}>
+                    <Text style={styles.modalButtonText}>Report</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -149,6 +188,8 @@ const styles = StyleSheet.create({
   chatContainer: { padding: 10 },
 
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: '#a020f0',
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -159,6 +200,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  reportButton: {
+    backgroundColor: '#ff3b30',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  reportButtonText: { color: '#fff', fontWeight: 'bold' },
 
   messageBubble: {
     maxWidth: '70%',
@@ -172,7 +220,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginTop: 4,
   },
-
   myMessage: {
     alignSelf: 'flex-end',
     backgroundColor: '#c05cff',
@@ -203,6 +250,26 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginLeft: 8,
   },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#000', },
+  modalText: { fontSize: 14, marginBottom: 15, color: '#000', },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-between' },
+  modalButton: { flex: 1, padding: 10, borderRadius: 8, alignItems: 'center', marginHorizontal: 5 },
+  cancelButton: { backgroundColor: '#ccc' },
+  submitButton: { backgroundColor: '#ff3b30' },
+  modalButtonText: { color: '#fff', fontWeight: 'bold' },
 
   loadingContainer: {
     flex: 1,
