@@ -145,11 +145,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 10,
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#000',
   },
   scrollView: {
     flexGrow: 0,
@@ -182,6 +184,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: '#000',
   },
   emptyMessage: {
     fontSize: 16,

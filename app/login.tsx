@@ -1,5 +1,4 @@
-import { Alert, Pressable, StyleSheet, TextInput } from 'react-native';
-import { Text, View } from '@/components/Themed';
+import { Alert, Pressable, StyleSheet, TextInput,  Text, View } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { login } from '@/scripts/userapi';
@@ -97,6 +96,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
+        backgroundColor: '#fff',
     },
     title: {
         fontSize: 24,

@@ -1,5 +1,4 @@
-import { StyleSheet, Image, ScrollView, Button, Pressable, View as RNView,TouchableOpacity } from 'react-native';
-import { Text, View } from '@/components/Themed';
+import { StyleSheet, Image, ScrollView, Button, Pressable, View as RNView,TouchableOpacity,  Text, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { clearAllStorage } from '@/scripts/db';
@@ -104,6 +103,11 @@ useEffect(() => {
   const handleEmergencyContacts = () => {
     router.push('/emergencycontacts');
   };
+
+  const handleMakeATicket = ()=>{
+    router.push('/reportissue');
+  }
+
 return (
     <ScrollView contentContainerStyle={styles.container}>
       <Pressable onPress={() => router.push("/editimage")}>
@@ -163,6 +167,10 @@ return (
 
       <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Tickets</Text>
       </TouchableOpacity>
     </ScrollView>
   );

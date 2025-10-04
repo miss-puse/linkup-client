@@ -158,12 +158,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 10,
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
   scrollContainer: {
     paddingHorizontal: 3,
     paddingBottom: 20,
   },
   cardContent: {
+    backgroundColor: '#fff',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
@@ -176,6 +178,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+    backgroundColor: '#fff'
   },
   placeholder: {
     backgroundColor: '#ddd',
@@ -183,23 +186,27 @@ const styles = StyleSheet.create({
   matchText: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#000000ff'
   },
   lastMessage: {
     fontSize: 14,
     color: '#555',
     marginTop: 5,
+    backgroundColor: '#fff'
   },
   emptyMessage: {
     fontSize: 16,
     color: '#666',
     marginTop: 20,
     textAlign: 'center',
+    backgroundColor: '#fff'
   },
   messageRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 5,
+    backgroundColor: '#fff'
   },
   timestamp: {
     fontSize: 12,

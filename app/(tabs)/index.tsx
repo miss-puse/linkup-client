@@ -1,5 +1,4 @@
-import { StyleSheet, Dimensions, Image, TouchableOpacity } from 'react-native';
-import { Text, View } from '@/components/Themed';
+import { StyleSheet, Dimensions, Image, TouchableOpacity,  Text, View } from 'react-native';
 import { useEffect, useState, useRef } from "react";
 import { getAllUsers } from '@/scripts/userapi';
 import Swiper from 'react-native-deck-swiper';
