@@ -1,0 +1,6 @@
+[
+  { "key": "BUG_REPORT", "label": "Bug Report" },
+  { "key": "FEATURE_REQUEST", "label": "Feature Request" },
+  { "key": "ACCOUNT_ISSUE", "label": "Account Issue" },
+  { "key": "REPORT_USER", "label": "Report User" }
+]

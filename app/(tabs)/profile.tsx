@@ -169,7 +169,7 @@ return (
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+      <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleMakeATicket}>
         <Text style={styles.logoutText}>Tickets</Text>
       </TouchableOpacity>
     </ScrollView>

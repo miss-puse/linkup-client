@@ -1,9 +1,8 @@
 import Constants from 'expo-constants';
-import {Alert} from "react-native";
-import { Platform, Switch,Image} from 'react-native';
+import axios from 'axios';
 
 const apiUrl = Constants.expoConfig?.extra?.API_URL;
-const TICKET_URL = apiUrl + "/tickets";
+const TICKET_URL = `${apiUrl}/tickets`;
 
 export interface TicketRequest {
   user: { userId: number };
@@ -23,54 +22,43 @@ export interface TicketDTO {
   resolvedBy?: number | null;
 }
 
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Request failed with status ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
+// Axios instance
+const api = axios.create({
+  baseURL: apiUrl,
+  headers: { 'Content-Type': 'application/json' },
+});
 
 // Get all tickets
 export async function getAllTickets(): Promise<TicketDTO[]> {
-  const res = await fetch(TICKET_URL);
-  return handleResponse<TicketDTO[]>(res);
+  const res = await api.get('/tickets');
+  return res.data;
 }
 
 // Get ticket by ID
 export async function getTicket(id: number): Promise<TicketDTO> {
-  const res = await fetch(`${TICKET_URL}/${id}`);
-  return handleResponse<TicketDTO>(res);
+  const res = await api.get(`/tickets/${id}`);
+  return res.data;
 }
 
 // Get tickets by user ID
 export async function getTicketsByUserId(userId: number): Promise<TicketDTO[]> {
-  const res = await fetch(`${TICKET_URL}/user/${userId}`);
-  return handleResponse<TicketDTO[]>(res);
+  const res = await api.get(`/tickets/user/${userId}`);
+  return res.data;
 }
 
 // Create a new ticket
 export async function createTicket(ticket: TicketRequest): Promise<TicketDTO> {
-  const res = await fetch(TICKET_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(ticket),
-  });
-  return handleResponse<TicketDTO>(res);
+  const res = await api.post('/tickets', ticket);
+  return res.data;
 }
 
 // Patch (partial update)
 export async function patchTicket(id: number, partialTicket: Partial<TicketDTO>): Promise<TicketDTO> {
-  const res = await fetch(`${TICKET_URL}/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(partialTicket),
-  });
-  return handleResponse<TicketDTO>(res);
+  const res = await api.patch(`/tickets/${id}`, partialTicket);
+  return res.data;
 }
 
 // Delete ticket
 export async function deleteTicket(id: number): Promise<void> {
-  const res = await fetch(`${TICKET_URL}/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error(`Failed to delete ticket with ID ${id}`);
+  await api.delete(`/tickets/${id}`);
 }

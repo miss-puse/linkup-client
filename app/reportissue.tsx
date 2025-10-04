@@ -11,13 +11,15 @@ import {
 import { useRouter } from "expo-router";
 import { getTicketsByUserId, createTicket, TicketDTO, TicketRequest } from "@/scripts/ticket";
 import { getFromStorage } from "@/scripts/db";
+import issuetypes from "@/data/issuetypes.json";
+import { Picker } from "@react-native-picker/picker";
 
 export default function MyTicketsScreen() {
   const [userData, setUserData] = useState<any>(null);
   const [tickets, setTickets] = useState<TicketDTO[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [issueType, setIssueType] = useState("");
+  const [issueType, setIssueType] = useState("BUG_REPORT");
   const [description, setDescription] = useState("");
 
   const router = useRouter();
@@ -26,11 +28,11 @@ export default function MyTicketsScreen() {
     const fetchUserData = async () => {
       try {
         const user = await getFromStorage("user");
-              
-        // if (!user) {
-        //    router.replace("/login");
-        //    return;
-        // }
+
+        if (!user) {
+           router.replace("/login");
+           return;
+        }
         setUserData(user);
 
         const rawData: any = user;
@@ -48,7 +50,7 @@ export default function MyTicketsScreen() {
     fetchUserData();
   }, []);
 
-  // 🧩 Create a new ticket
+  // Create new ticket
   const handleCreateTicket = async () => {
     if (!userId || !issueType.trim() || !description.trim()) {
       alert("Please fill all fields.");
@@ -63,13 +65,14 @@ export default function MyTicketsScreen() {
 
     try {
       const created = await createTicket(newTicket);
+      alert("Your ticket has been created successfully.");
       setTickets((prev) => [...prev, created]);
       setModalVisible(false);
       setIssueType("");
       setDescription("");
     } catch (error) {
       console.error("Error creating ticket:", error);
-      alert("Failed to create ticket.");
+      alert("Failed to create ticket. Please try again.");
     }
   };
 
@@ -77,7 +80,7 @@ export default function MyTicketsScreen() {
     <View style={styles.container}>
       <Text style={styles.header}>My Tickets</Text>
 
-      {/* ➕ Create Ticket Button */}
+      {/* Create Ticket Button */}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setModalVisible(true)}
@@ -85,7 +88,7 @@ export default function MyTicketsScreen() {
         <Text style={styles.addButtonText}>+ New Ticket</Text>
       </TouchableOpacity>
 
-      {/* 🧾 Ticket List */}
+      {/* Ticket List */}
       <ScrollView contentContainerStyle={styles.scroll}>
         {tickets.length > 0 ? (
           tickets.map((ticket) => (
@@ -105,18 +108,17 @@ export default function MyTicketsScreen() {
         )}
       </ScrollView>
 
-      {/* 🧩 Create Ticket Modal */}
+      {/* Create Ticket Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Create New Ticket</Text>
 
-            <TextInput
-              placeholder="Issue Type"
-              style={styles.input}
-              value={issueType}
-              onChangeText={setIssueType}
-            />
+            <Picker selectedValue={issueType} onValueChange={setIssueType}>
+               {issuetypes.map((item) => (
+                            <Picker.Item key={item.key} label={item.label} value={item.key} />
+              ))}
+            </Picker>
 
             <TextInput
               placeholder="Description"
@@ -151,6 +153,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#fff",
   },
   header: {
     fontSize: 26,
@@ -158,7 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   addButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#c85bdf",
     borderRadius: 10,
     padding: 10,
     alignSelf: "flex-start",
@@ -186,7 +189,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   ticketStatus: {
-    color: "#007AFF",
+    color: "#c85bdf",
     fontWeight: "500",
   },
   ticketDate: {
@@ -242,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   submitButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#c85bdf",
   },
   modalButtonText: {
     color: "#fff",
